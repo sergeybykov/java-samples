@@ -26,10 +26,9 @@ import static org.mockito.Mockito.when;
 
 import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowOptions;
-import io.temporal.samples.hello.HelloAsync.GreetingActivities;
-import io.temporal.samples.hello.HelloAsync.GreetingActivitiesImpl;
+import io.temporal.samples.hello.HelloAsync.GreetingAsyncActivities;
+import io.temporal.samples.hello.HelloAsync.GreetingAsyncWorkflowImpl;
 import io.temporal.samples.hello.HelloAsync.GreetingWorkflow;
-import io.temporal.samples.hello.HelloAsync.GreetingWorkflowImpl;
 import io.temporal.testing.TestWorkflowEnvironment;
 import io.temporal.worker.Worker;
 import org.junit.After;
@@ -66,7 +65,7 @@ public class HelloAsyncTest {
   public void setUp() {
     testEnv = TestWorkflowEnvironment.newInstance();
     worker = testEnv.newWorker(TASK_QUEUE);
-    worker.registerWorkflowImplementationTypes(GreetingWorkflowImpl.class);
+    worker.registerWorkflowImplementationTypes(GreetingAsyncWorkflowImpl.class);
 
     client = testEnv.getWorkflowClient();
   }
@@ -78,7 +77,7 @@ public class HelloAsyncTest {
 
   @Test
   public void testActivityImpl() {
-    worker.registerActivitiesImplementations(new GreetingActivitiesImpl());
+    worker.registerActivitiesImplementations(new HelloActivity.GreetingActivitiesImpl());
     testEnv.start();
 
     GreetingWorkflow workflow =
@@ -91,7 +90,7 @@ public class HelloAsyncTest {
 
   @Test
   public void testMockedActivity() {
-    GreetingActivities activities = mock(GreetingActivities.class);
+    GreetingAsyncActivities activities = mock(GreetingAsyncActivities.class);
     when(activities.composeGreeting("Hello", "World")).thenReturn("Hello World!");
     when(activities.composeGreeting("Bye", "World")).thenReturn("Bye World!");
     worker.registerActivitiesImplementations(activities);

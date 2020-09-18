@@ -26,9 +26,9 @@ import static org.mockito.Mockito.*;
 import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowOptions;
 import io.temporal.samples.hello.HelloActivityRetry.GreetingActivities;
-import io.temporal.samples.hello.HelloActivityRetry.GreetingActivitiesImpl;
+import io.temporal.samples.hello.HelloActivityRetry.GreetingActivitiesRetryImpl;
+import io.temporal.samples.hello.HelloActivityRetry.GreetingRetryWorkflowImpl;
 import io.temporal.samples.hello.HelloActivityRetry.GreetingWorkflow;
-import io.temporal.samples.hello.HelloActivityRetry.GreetingWorkflowImpl;
 import io.temporal.testing.TestWorkflowEnvironment;
 import io.temporal.worker.Worker;
 import org.junit.After;
@@ -62,7 +62,7 @@ public class HelloActivityRetryTest {
   public void setUp() {
     testEnv = TestWorkflowEnvironment.newInstance();
     worker = testEnv.newWorker(HelloActivityRetry.TASK_QUEUE);
-    worker.registerWorkflowImplementationTypes(GreetingWorkflowImpl.class);
+    worker.registerWorkflowImplementationTypes(GreetingRetryWorkflowImpl.class);
 
     client = testEnv.getWorkflowClient();
   }
@@ -74,7 +74,7 @@ public class HelloActivityRetryTest {
 
   @Test
   public void testActivityImpl() {
-    worker.registerActivitiesImplementations(new GreetingActivitiesImpl());
+    worker.registerActivitiesImplementations(new GreetingActivitiesRetryImpl());
     testEnv.start();
 
     WorkflowOptions workflowOptions =

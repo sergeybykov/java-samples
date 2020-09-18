@@ -24,13 +24,11 @@ import io.temporal.activity.ActivityMethod;
 import io.temporal.activity.ActivityOptions;
 import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowOptions;
-import io.temporal.serviceclient.WorkflowServiceStubs;
-import io.temporal.worker.Worker;
-import io.temporal.worker.WorkerFactory;
 import io.temporal.workflow.Workflow;
 import io.temporal.workflow.WorkflowInterface;
 import io.temporal.workflow.WorkflowMethod;
 import java.time.Duration;
+import java.util.Arrays;
 
 /**
  * Hello World Temporal workflow that executes a single activity. Requires a local instance the
@@ -81,22 +79,13 @@ public class HelloActivity {
     }
   }
 
-  public static void main(String[] args) {
-    // gRPC stubs wrapper that talks to the local docker instance of temporal service.
-    WorkflowServiceStubs service = WorkflowServiceStubs.newInstance();
-    // client that can be used to start and signal workflows
-    WorkflowClient client = WorkflowClient.newInstance(service);
+  public static void main(String[] args) throws ReflectiveOperationException {
 
-    // worker factory that can be used to create workers for specific task queues
-    WorkerFactory factory = WorkerFactory.newInstance(client);
-    // Worker that listens on a task queue and hosts both workflow and activity implementations.
-    Worker worker = factory.newWorker(TASK_QUEUE);
-    // Workflows are stateful. So you need a type to create instances.
-    worker.registerWorkflowImplementationTypes(GreetingWorkflowImpl.class);
-    // Activities are stateless and thread safe. So a shared instance is used.
-    worker.registerActivitiesImplementations(new GreetingActivitiesImpl());
-    // Start listening to the workflow and activity task queues.
-    factory.start();
+    WorkflowClient client =
+        HelloSetup.startWorker(
+            TASK_QUEUE,
+            Arrays.asList(GreetingWorkflowImpl.class),
+            Arrays.asList(new GreetingActivitiesImpl()));
 
     // Start a workflow execution. Usually this is done from another program.
     // Uses task queue from the GreetingWorkflow @WorkflowMethod annotation.

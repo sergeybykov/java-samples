@@ -24,14 +24,12 @@ import io.temporal.activity.ActivityOptions;
 import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowOptions;
 import io.temporal.common.RetryOptions;
-import io.temporal.serviceclient.WorkflowServiceStubs;
-import io.temporal.worker.Worker;
-import io.temporal.worker.WorkerFactory;
 import io.temporal.workflow.Functions;
 import io.temporal.workflow.Workflow;
 import io.temporal.workflow.WorkflowInterface;
 import io.temporal.workflow.WorkflowMethod;
 import java.time.Duration;
+import java.util.Arrays;
 
 /**
  * Demonstrates activity retries using an exponential backoff algorithm. Requires a local instance
@@ -56,7 +54,7 @@ public class HelloActivityRetry {
    * GreetingWorkflow implementation that demonstrates activity stub configured with {@link
    * RetryOptions}.
    */
-  public static class GreetingWorkflowImpl implements GreetingWorkflow {
+  public static class GreetingRetryWorkflowImpl implements GreetingWorkflow {
 
     /**
      * To enable activity retry set {@link RetryOptions} on {@link ActivityOptions}. It also works
@@ -82,7 +80,7 @@ public class HelloActivityRetry {
     }
   }
 
-  static class GreetingActivitiesImpl implements GreetingActivities {
+  static class GreetingActivitiesRetryImpl implements GreetingActivities {
     private int callCount;
     private long lastInvocationTime;
 
@@ -103,21 +101,11 @@ public class HelloActivityRetry {
   }
 
   public static void main(String[] args) {
-    // gRPC stubs wrapper that talks to the local docker instance of temporal service.
-    WorkflowServiceStubs service = WorkflowServiceStubs.newInstance();
-    // client that can be used to start and signal workflows
-    WorkflowClient client = WorkflowClient.newInstance(service);
-
-    // worker factory that can be used to create workers for specific task queues
-    WorkerFactory factory = WorkerFactory.newInstance(client);
-    // Worker that listens on a task queue and hosts both workflow and activity implementations.
-    Worker worker = factory.newWorker(TASK_QUEUE);
-    // Workflows are stateful. So you need a type to create instances.
-    worker.registerWorkflowImplementationTypes(GreetingWorkflowImpl.class);
-    // Activities are stateless and thread safe. So a shared instance is used.
-    worker.registerActivitiesImplementations(new GreetingActivitiesImpl());
-    // Start listening to the workflow and activity task queues.
-    factory.start();
+    WorkflowClient client =
+        HelloSetup.startWorker(
+            TASK_QUEUE,
+            Arrays.asList(GreetingRetryWorkflowImpl.class),
+            Arrays.asList(new GreetingActivitiesRetryImpl()));
 
     // Get a workflow stub using the same task queue the worker uses.
     WorkflowOptions workflowOptions = WorkflowOptions.newBuilder().setTaskQueue(TASK_QUEUE).build();
